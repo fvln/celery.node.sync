@@ -152,4 +152,64 @@ export default class AMQPBroker implements CeleryBroker {
         })
       );
   }
+
+  /**
+   * @method AMQPBroker#subscribe
+   * @param {String} queue
+   * @param {Int} maxTasksNo
+   * @param {Function} callback
+   * @returns {Promise}
+   */
+  public syncSubscribe(
+    queue: string,
+    maxTasksNo: number,
+    callback: (message: Message) => void
+  ): Promise<amqplib.Replies.Consume> {
+    return this.channel
+      .then(ch =>
+        ch
+          .assertQueue(queue, {
+            durable: true,
+            autoDelete: false,
+            exclusive: false,
+            // nowait: false,
+            arguments: null
+          })
+          .then(() => Promise.resolve(ch))
+      )
+      .then(ch => {
+
+        let tasksProcessed = 0;
+        while (tasksProcessed < maxTasksNo) {
+          ch.get(queue, function(err, msgOrFalse) {
+
+            // No message to process, sleep for a second and continue
+            if (msgOrFalse === false) {
+              await new Promise((resolve, reject) => {
+                setTimeout(resolve, 1000);
+              });
+              return;
+            }
+
+            // now supports only application/json of content-type
+            if (msgOrFalse.properties.contentType !== "application/json") {
+              console.error(
+                `unsupported content type ${msgOrFalse.properties.contentType}`
+              );
+            }
+
+            // now supports only utf-8 of content-encoding
+            if (msgOrFalse.properties.contentEncoding !== "utf-8") {
+              console.error(
+                `unsupported content encoding ${msgOrFalse.properties.contentEncoding}`
+              );
+            }
+
+            callback(new AMQPMessage(msgOrFalse));
+            ch.ack(msgOrFalse);
+
+          }, { noAck: false });
+        }
+      });
+  }
 }
