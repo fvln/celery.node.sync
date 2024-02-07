@@ -126,6 +126,21 @@ export default class RedisBroker implements CeleryBroker {
   }
 
   /**
+   * @method RedisBroker#syncSubscribe
+   * @param {String} queue
+   * @param {Int} maxTasksNo
+   * @param {Function} callback
+   * @returns {Promise}
+   */
+  public syncSubscribe(
+    queue: string,
+    maxTasksNo: number,
+    callback: (message: Message) => void
+  ): Promise<any[]> {
+    throw new Error("Not implemented")
+  }
+
+  /**
    * @private
    * @param {number} index
    * @param {Fucntion} resolve

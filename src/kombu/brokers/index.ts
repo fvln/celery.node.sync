@@ -13,6 +13,7 @@ export interface CeleryBroker {
     properties: object
   ) => Promise<any>;
   subscribe: (queue: string, callback: Function) => Promise<any>;
+  syncSubscribe: (queue: string, maxTasksNo: Number, callback: Function) => Promise<any>;
 }
 
 /**

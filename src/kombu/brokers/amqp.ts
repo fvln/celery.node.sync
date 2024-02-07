@@ -154,7 +154,7 @@ export default class AMQPBroker implements CeleryBroker {
   }
 
   /**
-   * @method AMQPBroker#subscribe
+   * @method AMQPBroker#syncSubscribe
    * @param {String} queue
    * @param {Int} maxTasksNo
    * @param {Function} callback

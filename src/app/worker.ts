@@ -45,6 +45,12 @@ export default class Worker extends Base {
     return this.run().catch(err => console.error(err));
   }
 
+  public syncStart(maxTasksNo: Number): Promise<any> {
+    console.info(`celery.node worker starting for ${maxTasksNo}...`);
+    console.info(`registered task: ${Object.keys(this.handlers)}`);
+    return this.syncRun().catch(err => console.error(err));
+  }
+
   /**
    * @method Worker#run
    * @private
@@ -53,6 +59,10 @@ export default class Worker extends Base {
    */
   private run(): Promise<any> {
     return this.isReady().then(() => this.processTasks());
+  }
+
+  private syncRun(maxTasksNo: Number): Promise<any> {
+    return this.isReady().then(() => this.syncProcessTasks(maxTasksNo));
   }
 
   /**
@@ -66,6 +76,11 @@ export default class Worker extends Base {
     return consumer();
   }
 
+  private syncProcessTasks(maxTasksNo: Number): Promise<any> {
+    const consumer = this.getSyncConsumer(this.conf.CELERY_QUEUE, maxTasksNo);
+    return consumer();
+  }
+
   /**
    * @method Worker#getConsumer
    * @private
@@ -76,6 +91,12 @@ export default class Worker extends Base {
     const onMessage = this.createTaskHandler();
 
     return (): any => this.broker.subscribe(queue, onMessage);
+  }
+
+  private getSyncConsumer(queue: string, maxTasksNo: Number): Function {
+    const onMessage = this.createTaskHandler();
+
+    return (): any => this.broker.syncSubscribe(queue, maxTasksNo, onMessage);
   }
 
   public createTaskHandler(): Function {
